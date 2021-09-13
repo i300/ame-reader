@@ -62,9 +62,11 @@ export default class Viewer extends React.Component {
           if (zipRe.test(file.name)) {
             // Display using zip file.
             this.unzip(this.props.viewerFile).then((blobs) => {
+              blobs.sort((a, b) => a.name.localeCompare(b.name));
+              const files = blobs.map(b => b.blob)
               this.setState(
                 {
-                  imageUrls: this.createUrls(blobs),
+                  imageUrls: this.createUrls(files),
                   isLoaded: true,
                 },
                 () => {
@@ -113,12 +115,12 @@ export default class Viewer extends React.Component {
       let imageFilenames = Object.keys(zip.files).filter(function (filename) {
         // Ignore non-image files
         return re.test(filename.toLowerCase());
-      }).sort((a, b) => a.localeCompare(b));
+      });
 
       let blobPromises = [];
       for (let filename of imageFilenames) {
         let file = zip.files[filename];
-        blobPromises.push(file.async("blob"));
+        blobPromises.push(file.async("blob").then(blob => ({ name: filename, blob })));
       }
       return Promise.all(blobPromises);
     });
